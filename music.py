@@ -37,7 +37,7 @@ def load_mp3(uploaded_file):
     return data, sr
 
 # ── アプリ本体 ──
-st.title("WaveForge")
+st.title("WaveForgeD")
 
 # ファイルアップロード
 uploaded_file = st.file_uploader("MP3ファイルをアップロード", type="mp3")
