@@ -16,7 +16,7 @@ AudioSegment.ffprobe   = "/usr/bin/ffprobe"
 
 # ── ページ設定 ──
 st.set_page_config(
-    page_title="WaveForge",
+    page_title="WaveForgeD",
     layout="centered"
 )
 
