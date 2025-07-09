@@ -22,6 +22,9 @@ st.set_page_config(
 
 # ── 音声ロード関数 ──
 def load_mp3(uploaded_file):
+    """
+    MP3を一時ファイル経由で読み込み、正規化した NumPy 配列とサンプリングレートを返す
+    """
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
         tmp.write(uploaded_file.read())
         tmp_path = tmp.name
@@ -29,6 +32,7 @@ def load_mp3(uploaded_file):
     sr = audio.frame_rate
     data = np.array(audio.get_array_of_samples(), dtype=np.float32)
     if audio.channels == 2:
+        # ステレオをモノラルに平均化
         data = data.reshape((-1, 2)).mean(axis=1)
     data /= np.abs(data).max()
     return data, sr
@@ -36,16 +40,20 @@ def load_mp3(uploaded_file):
 # ── アプリ本体 ──
 st.title("WaveForge")
 
+# ファイルアップロード
 uploaded_file = st.file_uploader("MP3ファイルをアップロード", type="mp3")
 if not uploaded_file:
     st.info("MP3ファイルをアップロードしてください。")
     st.stop()
 
+# 音声読み込み
 data, orig_sr = load_mp3(uploaded_file)
 duration = len(data) / orig_sr
 
+# ── 設定変更 ──
 st.write("### 設定変更")
 st.markdown("**標本化周波数と量子化ビット数を変えて、音の違いを聴き比べしなさい。**", unsafe_allow_html=True)
+
 st.markdown(
     "<span style='font-weight:bold; color:orange;'>標本化周波数 (Hz)：</span>1秒間に何回標本を取るかを示します。",
     unsafe_allow_html=True
@@ -65,6 +73,14 @@ quantized = np.round(rs_data * max_int) / max_int
 
 # ── 波形比較（従来） ──
 st.write("### 波形比較")
+
+# 振幅と量子化ビット数の説明を追加
+st.markdown("""
+- **振幅（Amplitude）**……時間ごとに連続的に変わる音の強さ  
+- **量子化ビット数**……「振幅」を何段階に分けるか  
+- **関係**……ビット数が多いほど振幅の変化を細かく表現でき、ノイズ（量子化誤差）を減らせる
+""")
+
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6), constrained_layout=True)
 
 # 元の波形
@@ -107,4 +123,41 @@ ax4.set(xlim=(0, zoom_end), ylim=(-1, 1))
 
 st.pyplot(fig2)
 
-# ── 再生とデータ量計算 以下省略 ──
+# ── オーディオ再生 ──
+st.write("### 再生")
+subtype_map = {8: 'PCM_U8', 16: 'PCM_16', 24: 'PCM_24'}
+selected_subtype = subtype_map.get(bit_depth, 'PCM_16')
+
+if np.all(quantized == 0):
+    st.warning(f"{target_sr} Hz にリサンプリングした結果、無音になってしまいました。標本化周波数を少し上げてください。")
+else:
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out:
+        sf.write(out.name, quantized, target_sr, subtype=selected_subtype)
+        st.audio(out.name, format="audio/wav")
+
+# ── データ量計算 ──
+st.write("### データ量計算")
+st.markdown("**音のデータ量 = 標本化周波数 (Hz) × 量子化ビット数 (bit) × 時間 (s) × チャンネル数 (ch)**")
+st.markdown("**設定を変更したファイルのデータ量＝**", unsafe_allow_html=True)
+
+# チャンネル数はモノラル（1ch）の場合
+bytes_size = target_sr * bit_depth * 1 * duration / 8
+kb_size = bytes_size / 1024
+mb_size = kb_size / 1024
+
+example = f"""
+<div style='line-height:1.2;'>
+{target_sr:,} Hz × {bit_depth:,} bit × 1 ch × {duration:.2f} 秒 ÷ 8 = {int(bytes_size):,} バイト<br>
+{int(bytes_size):,} バイト ÷ 1024 = {kb_size:,.2f} KB<br>
+{kb_size:,.2f} KB ÷ 1024 = {mb_size:,.2f} MB
+</div>
+"""
+st.markdown(example, unsafe_allow_html=True)
+
+channel_desc = """
+<div style='line-height:1.5; margin-top:20px;'>
+- ステレオ(2ch): 左右2つの音声信号を同時に再生します。音に広がりがあります。<br>
+- モノラル(1ch): 1つの音声信号で再生します。音の定位は中央になります。
+</div>
+"""
+st.markdown(channel_desc, unsafe_allow_html=True)
