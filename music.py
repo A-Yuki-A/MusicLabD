@@ -99,11 +99,20 @@ st.markdown("## 設定変更")
 st.markdown("音質に影響を与える2つの要素を調整できます。")
 
 # 標本化周波数設定
-st.markdown("**標本化周波数 (Sample Rate)**: 1秒間に何回音を記録するか。数値が大きいほど高い音域まで再現可能。例: CDは44,100 Hz")
-target_sr = st.slider("標本化周波数 (Hz)", min_value=4000, max_value=48000, value=orig_sr if orig_sr>=4000 else 44100, step=1000)
+st.markdown(
+    "**標本化周波数 (Sample Rate)**: 1秒間に何回音を記録するか。
+     数値が大きいほど高い音域まで再現可能。例: CDは44,100 Hz"
+)
+target_sr = st.slider(
+    "標本化周波数 (Hz)", min_value=4000, max_value=48000,
+    value=orig_sr if orig_sr>=4000 else 44100, step=1000
+)
 
 # 量子化ビット数設定
-st.markdown("**量子化ビット数 (Bit Depth)**: 振幅(Amplitude)を何段階で記録するか。ビット数が大きいほど音の強弱を滑らかに。例: CDは16 bit")
+st.markdown(
+    "**量子化ビット数 (Bit Depth)**: 振幅(Amplitude)を何段階で記録するか。
+     ビット数が大きいほど音の強弱を滑らかに。例: CDは16 bit"
+)
 bit_depth = st.slider("量子化ビット数 (bit)", min_value=8, max_value=24, value=16, step=1)
 
 # 再サンプリングと量子化
@@ -165,15 +174,17 @@ else:
 # データ量計算セクション
 st.markdown("## データ量計算")
 # データ量を求める式
-st.markdown("データ量 = サンプル数 × ビット数 ÷ 8 (Byte) → KB → MB の順に計算します。")
+st.markdown(
+    "データ量 = 標本化周波数 (Hz) × 量子化ビット数 (bit) × 時間 (s) × チャンネル (ch)"
+)
 
 # 計算過程表示
-samples = target_sr * duration  # サンプル総数
-bytes_ = samples * bit_depth * 1 / 8  # モノラル1ch
+count = target_sr * duration  # 標本化点の総数
+bytes_ = count * bit_depth * 1 / 8  # モノラル1chの場合
 kb = bytes_ / 1024
 mb = kb / 1024
 st.markdown(
-    f"- サンプル数: {int(samples):,}" +
+    f"- 標本化回数: {int(count):,} 回" +
     f"  \n- バイト数: {int(bytes_):,} B" +
     f"  \n- キロバイト: {kb:,.2f} KB" +
     f"  \n- メガバイト: {mb:,.2f} MB",
