@@ -1,3 +1,4 @@
+import streamlit as st
 # ── モノトーン調カスタムCSS（改訂版） ──
 st.markdown("""
 <style>
@@ -31,3 +32,27 @@ st.markdown("""
   }
 </style>
 """, unsafe_allow_html=True)
+
+# 以下、元のアプリのコードを続けます
+try:
+    from pydub import AudioSegment
+except ModuleNotFoundError:
+    st.error("pydub モジュールがインストールされていません。requirements.txt に 'pydub' を追加してください。")
+    st.stop()
+import numpy as np
+import matplotlib.pyplot as plt
+import librosa
+import tempfile
+import soundfile as sf
+
+# ── ffmpeg/ffprobe のパス指定 ──
+AudioSegment.converter = "/usr/bin/ffmpeg"
+AudioSegment.ffprobe   = "/usr/bin/ffprobe"
+
+# ── ページ設定 ──
+st.set_page_config(
+    page_title="WaveForge",
+    layout="centered"
+)
+
+# …以下、音声ロード関数や波形表示のコードが続きます…
