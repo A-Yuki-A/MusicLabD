@@ -38,9 +38,9 @@ st.markdown("""
   .stButton>button:hover {
     background-color: #63B8FF !important;
   }
-  /* スライダーのトラック */
+  /* スライダーのトラックを白に */
   .stSlider div[data-baseweb] > div {
-    background: #1E90FF !important;
+    background: #FFFFFF !important;
   }
 </style>
 """, unsafe_allow_html=True)
