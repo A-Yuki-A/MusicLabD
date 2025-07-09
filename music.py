@@ -180,6 +180,8 @@ st.markdown("## データ量計算")
 st.markdown(
     "データ量 = 標本化周波数 (Hz) × 量子化ビット数 (bit) × 時間 (s) × チャンネル (ch)"
 )
+# この計算はステレオ (2ch) で行っています
+st.markdown("この計算はステレオ (2ch) で計算しています。")
 
 # 計算過程の詳細表示
 count = target_sr * duration  # 標本化点の総数
