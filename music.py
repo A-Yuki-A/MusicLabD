@@ -95,7 +95,7 @@ data, orig_sr = load_mp3(downloaded_file)
 duration = len(data) / orig_sr  # 再生時間 (秒)
 
 # 設定変更セクション
-st.markdown("## 設定変更")
+st.markdown("## ◼️ 設定変更")
 st.markdown("音質に影響を与える2つの要素を調整できます。")
 
 # 標本化周波数設定
@@ -124,7 +124,7 @@ max_int = 2 ** (bit_depth - 1) - 1
 quantized = np.round(rs_data * max_int) / max_int
 
 # 波形比較セクション
-st.markdown("## 波形比較")
+st.markdown("## ◼️ 波形比較")
 st.markdown(
     "- 振幅 (Amplitude): 時間ごとの音の大きさ\n"
     "- 元波形: アップロードした元の音\n"
@@ -146,7 +146,7 @@ ax2.set(xlim=(0, duration), ylim=(-1, 1))
 st.pyplot(fig1)
 
 # 標本点表示 & ズームセクション
-st.markdown("## 標本化周波数の違いを強調")
+st.markdown("## ◼️ 標本化周波数の違いを強調")
 st.markdown("上: 全体の標本点, 下: 最初の1 ms をズーム表示")
 
 fig2, (ax3, ax4) = plt.subplots(2, 1, figsize=(8, 5), constrained_layout=True)
@@ -164,7 +164,7 @@ ax4.set(xlim=(0, zoom_dur), ylim=(-1, 1))
 st.pyplot(fig2)
 
 # 再生セクション
-st.markdown("## 再生")
+st.markdown("## ◼️ 再生")
 subtypes = {8: 'PCM_U8', 16: 'PCM_16', 24: 'PCM_24'}
 stype = subtypes.get(bit_depth, 'PCM_16')
 if np.all(quantized == 0):
@@ -175,7 +175,7 @@ else:
         st.audio(tmp.name)
 
 # データ量計算セクション
-st.markdown("## データ量計算")
+st.markdown("## ◼️ データ量計算")
 # データ量を求める式の表示
 st.markdown(
     "データ量 = 標本化周波数 (Hz) × 量子化ビット数 (bit) × 時間 (s) × チャンネル (ch)"
@@ -197,7 +197,7 @@ st.markdown(f"""
 メガバイト     = {kb:,.2f} ÷ 1024 = {mb:,.2f} MB
 ```""", unsafe_allow_html=True)
 
-# ステレオ・モノラルの違い説明
+# チャンネルの違い
 st.markdown("""
 - **ステレオ (2ch)**: 左右2つの音声信号で再生。音の広がりがある。
 - **モノラル (1ch)**: 1つの音声信号で再生。音の定位は中央。
