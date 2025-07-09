@@ -100,8 +100,8 @@ st.markdown("音質に影響を与える2つの要素を調整できます。")
 
 # 標本化周波数設定
 st.markdown(
-    "**標本化周波数 (Sample Rate)**: 1秒間に何回音を記録するか。
-     数値が大きいほど高い音域まで再現可能。例: CDは44,100 Hz"
+    """**標本化周波数 (Sample Rate)**: 1秒間に何回音を記録するか。
+数値が大きいほど高い音域まで再現可能。例: CDは44,100 Hz"""
 )
 target_sr = st.slider(
     "標本化周波数 (Hz)", min_value=4000, max_value=48000,
@@ -110,8 +110,8 @@ target_sr = st.slider(
 
 # 量子化ビット数設定
 st.markdown(
-    "**量子化ビット数 (Bit Depth)**: 振幅(Amplitude)を何段階で記録するか。
-     ビット数が大きいほど音の強弱を滑らかに。例: CDは16 bit"
+    """**量子化ビット数 (Bit Depth)**: 振幅 (Amplitude) を何段階で記録するか。
+ビット数が大きいほど音の強弱を滑らかに。例: CDは16 bit"""
 )
 bit_depth = st.slider("量子化ビット数 (bit)", min_value=8, max_value=24, value=16, step=1)
 
