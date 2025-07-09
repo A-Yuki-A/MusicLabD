@@ -16,9 +16,48 @@ AudioSegment.ffprobe   = "/usr/bin/ffprobe"
 
 # ── ページ設定 ──
 st.set_page_config(
-    page_title="WaveForgeTEST",
+    page_title="WaveForge",
     layout="centered"
 )
+
+# ── モノトーン調カスタムCSS ──
+st.markdown("""
+<style>
+  /* 背景とテキスト色 */
+  [data-testid="stAppViewContainer"] {
+    background-color: #FFFFFF;
+    color: #000000;
+  }
+  /* サイドバー */
+  [data-testid="stSidebar"] {
+    background-color: #F8F8F8;
+    color: #000000;
+  }
+  /* 見出しフォントをシンプルに */
+  h1, h2, h3, h4 {
+    font-family: 'Helvetica Neue', sans-serif;
+    color: #000000;
+  }
+  /* ボタン */
+  .stButton>button {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    border-radius: 4px;
+  }
+  .stButton>button:hover {
+    background-color: #EEEEEE !important;
+  }
+  /* スライダーのトラック */
+  .stSlider .css-1wy0on6 {
+    background: #C0C0C0 !important;
+  }
+  /* マークダウンテキスト */
+  .stMarkdown, .stWrite {
+    color: #000000;
+  }
+</style>
+""", unsafe_allow_html=True)
 
 # ── 音声ロード関数 ──
 def load_mp3(uploaded_file):
@@ -80,14 +119,11 @@ st.markdown("""
 """)
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6), constrained_layout=True)
-
-# 元の波形
 t_orig = np.linspace(0, duration, num=len(data))
 ax1.plot(t_orig, data)
 ax1.set(title="Original Waveform", xlabel="Time (s)", ylabel="Amplitude")
 ax1.set(xlim=(0, duration), ylim=(-1, 1))
 
-# 処理後の波形
 proc_len = min(len(quantized), int(duration * target_sr))
 t_proc = np.linspace(0, duration, num=proc_len)
 ax2.plot(t_proc, quantized[:proc_len])
@@ -107,8 +143,6 @@ st.markdown(f"""
 """)
 
 fig2, (ax3, ax4) = plt.subplots(2, 1, figsize=(8, 6), constrained_layout=True)
-
-# 1. 全体波形＋標本点
 t_full = np.linspace(0, duration, num=len(quantized))
 ax3.plot(t_full, quantized, linewidth=1)
 ax3.scatter(t_full, quantized, s=5)
@@ -116,8 +150,7 @@ ax3.set(title="Processed Waveform with Sample Points",
         xlabel="Time (s)", ylabel="Amplitude")
 ax3.set(xlim=(0, duration), ylim=(-1, 1))
 
-# 2. ズーム表示（最初の0.001秒を拡大）
-zoom_end = 0.001  # 1ミリ秒
+zoom_end = 0.001  # ズーム範囲を1ミリ秒に設定
 zoom_count = int(target_sr * zoom_end)
 t_zoom = t_full[:zoom_count]
 ax4.plot(t_zoom, quantized[:zoom_count], linewidth=1)
@@ -128,4 +161,40 @@ ax4.set(xlim=(0, zoom_end), ylim=(-1, 1))
 
 st.pyplot(fig2)
 
-# ── 以下、再生・データ量計算など ──
+# ── オーディオ再生 ──
+st.write("### 再生")
+subtype_map = {8: 'PCM_U8', 16: 'PCM_16', 24: 'PCM_24'}
+selected_subtype = subtype_map.get(bit_depth, 'PCM_16')
+
+if np.all(quantized == 0):
+    st.warning(f"{target_sr} Hz にリサンプリングした結果、無音になってしまいました。標本化周波数を少し上げてください。")
+else:
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out:
+        sf.write(out.name, quantized, target_sr, subtype=selected_subtype)
+        st.audio(out.name, format="audio/wav")
+
+# ── データ量計算 ──
+st.write("### データ量計算")
+st.markdown("**音のデータ量 = 標本化周波数 (Hz) × 量子化ビット数 (bit) × 時間 (s) × チャンネル数 (ch)**")
+st.markdown("**設定を変更したファイルのデータ量＝**", unsafe_allow_html=True)
+
+bytes_size = target_sr * bit_depth * 1 * duration / 8
+kb_size = bytes_size / 1024
+mb_size = kb_size / 1024
+
+example = f"""
+<div style='line-height:1.2;'>
+{target_sr:,} Hz × {bit_depth:,} bit × 1 ch × {duration:.2f} 秒 ÷ 8 = {int(bytes_size):,} バイト<br>
+{int(bytes_size):,} バイト ÷ 1024 = {kb_size:,.2f} KB<br>
+{kb_size:,.2f} KB ÷ 1024 = {mb_size:,.2f} MB
+</div>
+"""
+st.markdown(example, unsafe_allow_html=True)
+
+channel_desc = """
+<div style='line-height:1.5; margin-top:20px;'>
+- ステレオ(2ch): 左右2つの音声信号を同時に再生します。音に広がりがあります。<br>
+- モノラル(1ch): 1つの音声信号で再生します。音の定位は中央になります。
+</div>
+"""
+st.markdown(channel_desc, unsafe_allow_html=True)
