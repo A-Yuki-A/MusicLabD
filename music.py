@@ -82,12 +82,12 @@ def load_mp3(uploaded_file):
     return data, sr
 
 # アプリ本体
-st.title("🎵 WaveForge: 音質比較アプリ")
+st.title("WaveForge")
 
 # ファイルアップロード
 uploaded_file = st.file_uploader("MP3ファイルをアップロード", type="mp3")
 if not uploaded_file:
-    st.info("まずは MP3 ファイルをアップロードしてください。")
+    st.info("MP3ファイルをアップロードしてください。")
     st.stop()
 
 # 音声読み込み
@@ -95,15 +95,15 @@ data, orig_sr = load_mp3(uploaded_file)
 duration = len(data) / orig_sr  # 再生時間 (秒)
 
 # 設定変更セクション
-st.markdown("## ⚙️ 設定変更")
+st.markdown("## 設定変更")
 st.markdown("音質に影響を与える2つの要素を調整できます。")
 
 # 標本化周波数設定
-st.markdown("**標本化周波数 (Sample Rate)**: 1秒間に何回音を記録するか。数値が大きいほど高い音域まで再現可能。\n例: CDは44,100 Hz")
+st.markdown("**標本化周波数 (Sample Rate)**: 1秒間に何回音を記録するか。数値が大きいほど高い音域まで再現可能。例: CDは44,100 Hz")
 target_sr = st.slider("標本化周波数 (Hz)", min_value=4000, max_value=48000, value=orig_sr if orig_sr>=4000 else 44100, step=1000)
 
 # 量子化ビット数設定
-st.markdown("**量子化ビット数 (Bit Depth)**: 振幅(Amplitude)を何段階で記録するか。ビット数が大きいほど音の強弱を滑らかに。\n例: CDは16 bit")
+st.markdown("**量子化ビット数 (Bit Depth)**: 振幅(Amplitude)を何段階で記録するか。ビット数が大きいほど音の強弱を滑らかに。例: CDは16 bit")
 bit_depth = st.slider("量子化ビット数 (bit)", min_value=8, max_value=24, value=16, step=1)
 
 # 再サンプリングと量子化
@@ -112,7 +112,7 @@ max_int = 2**(bit_depth - 1) - 1
 quantized = np.round(rs_data * max_int) / max_int
 
 # 波形比較セクション
-st.markdown("## 📈 波形比較")
+st.markdown("## 波形比較")
 st.markdown(
     "- 振幅 (Amplitude): 時間ごとの音の大きさ\n"
     "- 元波形: アップロードした元の音\n"
@@ -134,12 +134,12 @@ ax2.set(xlim=(0, duration), ylim=(-1,1))
 st.pyplot(fig1)
 
 # 標本点表示 & ズームセクション
-st.markdown("## 🔍 標本化周波数の違いを強調")
-st.markdown("上: 全体の標本点 (●), 下: 最初の1 ms をズーム表示")
+st.markdown("## 標本化周波数の違いを強調")
+st.markdown("上: 全体の標本点, 下: 最初の1 ms をズーム表示")
 
 fig2, (ax3, ax4) = plt.subplots(2, 1, figsize=(8, 5), constrained_layout=True)
+# 全体標本点表示
 t_full = np.linspace(0, duration, len(quantized))
-# 全体
 ax3.scatter(t_full, quantized, s=6)
 ax3.set(title="Sample Points", xlabel="Time [s]", ylabel="Amplitude")
 # ズーム (0–0.001s)
@@ -152,7 +152,7 @@ ax4.set(xlim=(0,zoom_dur), ylim=(-1,1))
 st.pyplot(fig2)
 
 # 再生セクション
-st.markdown("## ▶️ 再生")
+st.markdown("## 再生")
 subtypes = {8:'PCM_U8',16:'PCM_16',24:'PCM_24'}
 stype = subtypes.get(bit_depth,'PCM_16')
 if np.all(quantized==0):
@@ -163,12 +163,19 @@ else:
         st.audio(tmp.name)
 
 # データ量計算セクション
-st.markdown("## 💾 データ量計算")
-st.markdown("データ量 = サンプリング数 × ビット数 ÷ 8 (Byte)  = バイト数 → KB → MB の順に計算表示します。")
+st.markdown("## データ量計算")
+# データ量を求める式
+st.markdown("データ量 = サンプル数 × ビット数 ÷ 8 (Byte) → KB → MB の順に計算します。")
 
 # 計算過程表示
 samples = target_sr * duration  # サンプル総数
 bytes_ = samples * bit_depth * 1 / 8  # モノラル1ch
 kb = bytes_ / 1024
 mb = kb / 1024
-st.markdown(f"- サンプル数: {int(samples):,}  \n- バイト数: {int(bytes_):,} B  \n- キロバイト: {kb:,.2f} KB  \n- メガバイト: {mb:,.2f} MB", unsafe_allow_html=True)
+st.markdown(
+    f"- サンプル数: {int(samples):,}" +
+    f"  \n- バイト数: {int(bytes_):,} B" +
+    f"  \n- キロバイト: {kb:,.2f} KB" +
+    f"  \n- メガバイト: {mb:,.2f} MB",
+    unsafe_allow_html=True
+)
