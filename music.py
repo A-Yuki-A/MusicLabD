@@ -85,13 +85,13 @@ def load_mp3(uploaded_file):
 st.title("WaveForge")
 
 # ファイルアップロード
-uploaded_file = st.file_uploader("MP3ファイルをアップロード", type="mp3")
-if not uploaded_file:
+downloaded_file = st.file_uploader("MP3ファイルをアップロード", type="mp3")
+if not downloaded_file:
     st.info("MP3ファイルをアップロードしてください。")
     st.stop()
 
 # 音声読み込み
-data, orig_sr = load_mp3(uploaded_file)
+data, orig_sr = load_mp3(downloaded_file)
 duration = len(data) / orig_sr  # 再生時間 (秒)
 
 # 設定変更セクション
@@ -100,24 +100,27 @@ st.markdown("音質に影響を与える2つの要素を調整できます。")
 
 # 標本化周波数設定
 st.markdown(
-    """**標本化周波数 (Sample Rate)**: 1秒間に何回音を記録するか。
-数値が大きいほど高い音域まで再現可能。例: CDは44,100 Hz"""
+    "**標本化周波数 (Sample Rate)**: 1秒間に何回音を記録するか。数値が大きいほど高い音域まで再現可能。例: CDは44,100 Hz"
 )
 target_sr = st.slider(
     "標本化周波数 (Hz)", min_value=4000, max_value=48000,
-    value=orig_sr if orig_sr>=4000 else 44100, step=1000
+    value=orig_sr if orig_sr >= 4000 else 44100,
+    step=1000
 )
 
 # 量子化ビット数設定
 st.markdown(
-    """**量子化ビット数 (Bit Depth)**: 振幅 (Amplitude) を何段階で記録するか。
-ビット数が大きいほど音の強弱を滑らかに。例: CDは16 bit"""
+    "**量子化ビット数 (Bit Depth)**: 振幅 (Amplitude) を何段階で記録するか。ビット数が大きいほど音の強弱を滑らかに。例: CDは16 bit"
 )
-bit_depth = st.slider("量子化ビット数 (bit)", min_value=8, max_value=24, value=16, step=1)
+bit_depth = st.slider(
+    "量子化ビット数 (bit)",
+    min_value=8, max_value=24,
+    value=16, step=1
+)
 
 # 再サンプリングと量子化
 rs_data = librosa.resample(data, orig_sr=orig_sr, target_sr=target_sr)
-max_int = 2**(bit_depth - 1) - 1
+max_int = 2 ** (bit_depth - 1) - 1
 quantized = np.round(rs_data * max_int) / max_int
 
 # 波形比較セクション
@@ -134,12 +137,12 @@ fig1, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 5), constrained_layout=True)
 t_orig = np.linspace(0, duration, len(data))
 ax1.plot(t_orig, data)
 ax1.set(title="Original Waveform", xlabel="Time [s]", ylabel="Amplitude")
-ax1.set(xlim=(0, duration), ylim=(-1,1))
+ax1.set(xlim=(0, duration), ylim=(-1, 1))
 # 処理後の波形
 t_proc = np.linspace(0, duration, len(quantized))
 ax2.plot(t_proc, quantized)
 ax2.set(title=f"Processed ({target_sr} Hz, {bit_depth} bit)", xlabel="Time [s]", ylabel="Amplitude")
-ax2.set(xlim=(0, duration), ylim=(-1,1))
+ax2.set(xlim=(0, duration), ylim=(-1, 1))
 st.pyplot(fig1)
 
 # 標本点表示 & ズームセクション
@@ -150,21 +153,21 @@ fig2, (ax3, ax4) = plt.subplots(2, 1, figsize=(8, 5), constrained_layout=True)
 # 全体標本点表示
 t_full = np.linspace(0, duration, len(quantized))
 ax3.scatter(t_full, quantized, s=6)
-ax3.set(title="Sample Points", xlabel="Time [s]", ylabel="Amplitude")
+ax3.set(title="標本点表示", xlabel="Time [s]", ylabel="Amplitude")
 # ズーム (0–0.001s)
 zoom_dur = 0.001
 idx = int(target_sr * zoom_dur)
 t_zoom = t_full[:idx]
 ax4.scatter(t_zoom, quantized[:idx], s=20)
-ax4.set(title=f"Zoomed (0–{zoom_dur*1000:.1f} ms)", xlabel="Time [s]", ylabel="Amplitude")
-ax4.set(xlim=(0,zoom_dur), ylim=(-1,1))
+ax4.set(title=f"ズーム (0–{zoom_dur*1000:.1f} ms)", xlabel="Time [s]", ylabel="Amplitude")
+ax4.set(xlim=(0, zoom_dur), ylim=(-1, 1))
 st.pyplot(fig2)
 
 # 再生セクション
 st.markdown("## 再生")
-subtypes = {8:'PCM_U8',16:'PCM_16',24:'PCM_24'}
-stype = subtypes.get(bit_depth,'PCM_16')
-if np.all(quantized==0):
+subtypes = {8: 'PCM_U8', 16: 'PCM_16', 24: 'PCM_24'}
+stype = subtypes.get(bit_depth, 'PCM_16')
+if np.all(quantized == 0):
     st.warning(f"{target_sr} Hz では無音です。標本化周波数を上げてください。")
 else:
     with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
@@ -173,20 +176,20 @@ else:
 
 # データ量計算セクション
 st.markdown("## データ量計算")
-# データ量を求める式
+# データ量を求める式の表示
 st.markdown(
     "データ量 = 標本化周波数 (Hz) × 量子化ビット数 (bit) × 時間 (s) × チャンネル (ch)"
 )
 
-# 計算過程表示
+# 計算過程の詳細表示
 count = target_sr * duration  # 標本化点の総数
 bytes_ = count * bit_depth * 1 / 8  # モノラル1chの場合
 kb = bytes_ / 1024
 mb = kb / 1024
 st.markdown(
-    f"- 標本化回数: {int(count):,} 回" +
-    f"  \n- バイト数: {int(bytes_):,} B" +
-    f"  \n- キロバイト: {kb:,.2f} KB" +
-    f"  \n- メガバイト: {mb:,.2f} MB",
+    f"- 標本化点の総数 = {target_sr} × {duration:.2f} = {int(count):,} 回" +
+    f"  \n- バイト数 = {int(count):,} × {bit_depth} ÷ 8 = {int(bytes_):,} B" +
+    f"  \n- キロバイト = {int(bytes_):,} ÷ 1024 = {kb:,.2f} KB" +
+    f"  \n- メガバイト = {kb:,.2f} ÷ 1024 = {mb:,.2f} MB",
     unsafe_allow_html=True
 )
