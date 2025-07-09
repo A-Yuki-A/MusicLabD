@@ -188,16 +188,19 @@ count = target_sr * duration  # 標本化点の総数
 bytes_ = count * bit_depth * 2 / 8  # ステレオ2chの場合
 kb = bytes_ / 1024
 mb = kb / 1024
-st.markdown(
-    f"- 標本化点の総数 = {target_sr} × {duration:.2f} = {int(count):,} 点" +
-    f"  \n- バイト数 = {int(count):,} × {bit_depth} × 2 ÷ 8 = {int(bytes_):,} B" +
-    f"  \n- キロバイト = {int(bytes_):,} ÷ 1024 = {kb:,.2f} KB" +
-    f"  \n- メガバイト = {kb:,.2f} ÷ 1024 = {mb:,.2f} MB",
-    unsafe_allow_html=True
-)
+# 数値をコードブロックで表示し、見た目を区別
+st.markdown(f"""
+```text
+標本化点の総数 = {target_sr} × {duration:.2f} = {int(count):,} 点
+バイト数         = {int(count):,} × {bit_depth} × 2 ÷ 8 = {int(bytes_):,} B
+キロバイト     = {int(bytes_):,} ÷ 1024 = {kb:,.2f} KB
+メガバイト     = {kb:,.2f} ÷ 1024 = {mb:,.2f} MB
+```""", unsafe_allow_html=True)
 
 # ステレオ・モノラルの違い説明
+st.markdown("## チャンネルの違い")
 st.markdown(
-    "- **ステレオ (2ch)**: 左右2つの音声信号で再生。音の広がりがある。\n"
+    "- **ステレオ (2ch)**: 左右2つの音声信号で再生。音の広がりがある。
+"
     "- **モノラル (1ch)**: 1つの音声信号で再生。音の定位は中央。"
 )
