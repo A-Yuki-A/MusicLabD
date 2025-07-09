@@ -1,10 +1,16 @@
 import streamlit as st
 
-# ── モノトーン調＆レイアウト調整 CSS ──
+# ── ページ設定 ──
+st.set_page_config(
+    page_title="WaveForge",
+    layout="centered"
+)
+
+# ── 全体レイアウト & スタイル調整 CSS ──
 st.markdown("""
 <style>
-  /* 画面両サイド（背景）を淡いグレーに */
-  [data-testid="stAppViewContainer"] {
+  /* 画面両サイドを淡いグレーに */
+  html, body, [data-testid="stAppViewContainer"] {
     background-color: #f5f5f5 !important;
   }
   /* スライダーのトラックを淡いグレーに */
@@ -14,6 +20,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ── 必要ライブラリ読み込み ──
 import numpy as np
 import matplotlib.pyplot as plt
 import librosa
@@ -30,14 +37,11 @@ except ModuleNotFoundError:
 AudioSegment.converter = "/usr/bin/ffmpeg"
 AudioSegment.ffprobe   = "/usr/bin/ffprobe"
 
-# ── ページ設定 ──
-st.set_page_config(
-    page_title="WaveForge",
-    layout="centered"
-)
-
 # ── 音声ロード関数 ──
 def load_mp3(uploaded_file):
+    """
+    MP3 を一時ファイル経由で読み込み、正規化した NumPy 配列とサンプリングレートを返す
+    """
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
         tmp.write(uploaded_file.read())
         tmp_path = tmp.name
@@ -45,6 +49,7 @@ def load_mp3(uploaded_file):
     sr = audio.frame_rate
     data = np.array(audio.get_array_of_samples(), dtype=np.float32)
     if audio.channels == 2:
+        # ステレオをモノラルに平均化
         data = data.reshape((-1, 2)).mean(axis=1)
     data /= np.abs(data).max()
     return data, sr
@@ -52,11 +57,13 @@ def load_mp3(uploaded_file):
 # ── アプリ本体 ──
 st.title("WaveForge")
 
+# ファイルアップロード
 uploaded_file = st.file_uploader("MP3ファイルをアップロード", type="mp3")
 if not uploaded_file:
     st.info("MP3ファイルをアップロードしてください。")
     st.stop()
 
+# 音声読み込み
 data, orig_sr = load_mp3(uploaded_file)
 duration = len(data) / orig_sr
 
@@ -64,11 +71,13 @@ duration = len(data) / orig_sr
 st.markdown("<div style='background-color:#f0f0f0;padding:10px;border-radius:5px'>", unsafe_allow_html=True)
 st.write("### 設定変更")
 st.markdown("**標本化周波数と量子化ビット数を変えて、音の違いを聴き比べしなさい。**", unsafe_allow_html=True)
+
 st.markdown(
     "<span style='font-weight:bold; color:orange;'>標本化周波数 (Hz)：</span>1秒間に何回標本を取るかを示します。",
     unsafe_allow_html=True
 )
 target_sr = st.slider("", 4000, 48000, orig_sr if orig_sr >= 4000 else 44100, step=1000)
+
 st.markdown(
     "<span style='font-weight:bold; color:orange;'>量子化ビット数：</span>1サンプルを何段階に分けるかを示します。",
     unsafe_allow_html=True
@@ -123,7 +132,7 @@ ax3.scatter(t_full, quantized, s=5)
 ax3.set(title="Processed Waveform with Sample Points", xlabel="Time (s)", ylabel="Amplitude")
 ax3.set(xlim=(0, duration), ylim=(-1, 1))
 
-zoom_end = 0.001
+zoom_end = 0.001  # ズーム範囲：1ミリ秒
 zoom_count = int(target_sr * zoom_end)
 t_zoom = t_full[:zoom_count]
 ax4.plot(t_zoom, quantized[:zoom_count], linewidth=1)
@@ -140,4 +149,21 @@ st.write("### 再生")
 subtype_map = {8: 'PCM_U8', 16: 'PCM_16', 24: 'PCM_24'}
 selected_subtype = subtype_map.get(bit_depth, 'PCM_16')
 
-if
+if np.all(quantized == 0):
+    st.warning(f"{target_sr} Hz にリサンプリングした結果、無音になってしまいました。標本化周波数を少し上げてください。")
+else:
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out:
+        sf.write(out.name, quantized, target_sr, subtype=selected_subtype)
+        st.audio(out.name, format="audio/wav")
+st.markdown("</div>", unsafe_allow_html=True)
+
+# ── データ量計算 ──
+st.write("### データ量計算")
+bytes_size = target_sr * bit_depth * 1 * duration / 8
+kb_size = bytes_size / 1024
+mb_size = kb_size / 1024
+
+st.markdown(f"""
+**音のデータ量 = 標本化周波数 (Hz) × 量子化ビット数 (bit) × 時間 (s) × チャンネル数 (ch)**  
+{target_sr:,} Hz × {bit_depth:,} bit × 1 ch × {duration:.2f} 秒 ÷ 8 = {int(bytes_size):,} バイト → {kb_size:,.2f} KB → {mb_size:,.2f} MB
+""")
