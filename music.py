@@ -190,5 +190,12 @@ st.markdown(
     f"- 標本化点の総数 = {target_sr} × {duration:.2f} = {int(count):,} 点" +
     f"  \n- バイト数 = {int(count):,} × {bit_depth} × 2 ÷ 8 = {int(bytes_):,} B" +
     f"  \n- キロバイト = {int(bytes_):,} ÷ 1024 = {kb:,.2f} KB" +
-    f"  \n- メガバイト = {kb:,.
+    f"  \n- メガバイト = {kb:,.2f} ÷ 1024 = {mb:,.2f} MB",
+    unsafe_allow_html=True
+)
 
+# ステレオ・モノラルの違い説明
+st.markdown(
+    "- **ステレオ (2ch)**: 左右2つの音声信号で再生。音の広がりがある。\n"
+    "- **モノラル (1ch)**: 1つの音声信号で再生。音の定位は中央。"
+)
