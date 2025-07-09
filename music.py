@@ -7,46 +7,40 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ── おしゃれなダークテーマ & カラーデザイン ┼─
+# ── ライトテーマ カスタムCSS ──
 st.markdown("""
 <style>
-  /* アプリ全体背景 */
-  html, body, [data-testid="stAppViewContainer"] {
-    background-color: #181818 !important;
-    color: #E0E0E0 !important;
+  /* 全体背景と文字色 */
+  html, body, [data-testid=\"stAppViewContainer\"] {
+    background-color: #FFFFFF !important;
+    color: #333333 !important;
   }
   /* サイドバー */
-  [data-testid="stSidebar"] {
-    background-color: #232323 !important;
-    color: #E0E0E0 !important;
-    border-right: 1px solid #333333;
+  [data-testid=\"stSidebar\"] {
+    background-color: #F0F0F0 !important;
+    color: #333333 !important;
   }
   /* 見出し */
   h1, h2, h3, h4 {
-    font-family: 'Helvetica Neue', sans-serif;
-    color: #BB86FC !important;
+    color: #1E90FF !important;
   }
-  /* マークダウン本文 */
+  /* マークダウンテキスト */
   .stMarkdown, .stWrite {
-    color: #E0E0E0 !important;
+    color: #333333 !important;
   }
   /* ボタン */
   .stButton>button {
-    background-color: #BB86FC !important;
-    color: #181818 !important;
+    background-color: #1E90FF !important;
+    color: #FFFFFF !important;
     border: none !important;
     border-radius: 4px !important;
   }
   .stButton>button:hover {
-    background-color: #CF9CFF !important;
+    background-color: #63B8FF !important;
   }
-  /* スライダー */
+  /* スライダーのトラック */
   .stSlider div[data-baseweb] > div {
-    background: #BB86FC !important;
-  }
-  /* 入力コンポーネントのテキスト */
-  .css-1tcy0l5, .css-1bxjl7a {
-    color: #E0E0E0 !important;
+    background: #1E90FF !important;
   }
 </style>
 """, unsafe_allow_html=True)
@@ -66,7 +60,7 @@ except ModuleNotFoundError:
 
 # ffmpeg/ffprobe のパス指定
 AudioSegment.converter = "/usr/bin/ffmpeg"
-AudioSegment.ffprobe   = "/usr/bin/ffprobe"
+AudioSegment.ffprobe = "/usr/bin/ffprobe"
 
 # 音声ロード関数
 def load_mp3(uploaded_file):
@@ -81,7 +75,8 @@ def load_mp3(uploaded_file):
     data /= np.abs(data).max()
     return data, sr
 
-# アプリ本体\st.title("WaveForge")
+# アプリ本体
+st.title("WaveForge")
 
 # ファイルアップロード
 uploaded_file = st.file_uploader("MP3ファイルをアップロード", type="mp3")
@@ -97,11 +92,11 @@ duration = len(data) / orig_sr
 st.markdown("## 設定変更")
 st.markdown("**標本化周波数と量子化ビット数を変えて、音の違いを聴き比べしなさい。**")
 
-st.markdown("**標本化周波数 (Hz)：** 1秒間に何回標本を取るかを示します。 対応例: 44100Hz")
+st.markdown("**標本化周波数 (Hz)：** 1秒間に何回標本を取るかを示します。")
 target_sr = st.slider("", 4000, 48000, orig_sr if orig_sr >= 4000 else 44100, step=1000)
 
-st.markdown("**量子化ビット数：** 1サンプルを何段階に分けるかを示します。 対応例: 16bit")
-bit_depth = st.slider("", 3, 24, 16, step=1)
+st.markdown("**量子化ビット数：** 1サンプルを何段階に分けるかを示します。")
+bit_depth = st.slider("", 3, 24, 16)
 
 # 再サンプリングと量子化
 rs_data = librosa.resample(data, orig_sr=orig_sr, target_sr=target_sr)
@@ -111,38 +106,34 @@ quantized = np.round(rs_data * max_int) / max_int
 # 波形比較セクション
 st.markdown("## 波形比較")
 st.markdown(
-    "- **振幅 (Amplitude)**: 時間ごとに変わる音の強さ\n"
-    "- **量子化ビット数**: 振幅を何段階に分けるか\n"
-    "- **関係**: ビット数が多いほど振幅の変化を細かく表現できる",
+    "- **振幅（Amplitude）**: 時間ごとに変わる音の強さ  \n"
+    "- **量子化ビット数**: 振幅を何段階に分けるか  \n"
+    "- **関係**: ビット数が多いほど振幅の変化を細かく表現でき、ノイズを減らせる",
     unsafe_allow_html=True
 )
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6), constrained_layout=True)
-# 元の波形
+fig1, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6), constrained_layout=True)
 t_orig = np.linspace(0, duration, num=len(data))
 ax1.plot(t_orig, data)
 ax1.set(title="Original Waveform", xlabel="Time (s)", ylabel="Amplitude")
 ax1.set(xlim=(0, duration), ylim=(-1, 1))
-# 処理後の波形
 proc_len = min(len(quantized), int(duration * target_sr))
 t_proc = np.linspace(0, duration, num=proc_len)
 ax2.plot(t_proc, quantized[:proc_len])
-ax2.set(title=f"Processed Waveform ({target_sr:,} Hz, {bit_depth:,}bit)", xlabel="Time (s)", ylabel="Amplitude")
+ax2.set(title=f"Processed Waveform ({target_sr:,} Hz, {bit_depth:,} bit)", xlabel="Time (s)", ylabel="Amplitude")
 ax2.set(xlim=(0, duration), ylim=(-1, 1))
-st.pyplot(fig)
+st.pyplot(fig1)
 
-# 標本点表示 & ズーム
+# 標本点表示 & ズームセクション
 st.markdown("## 標本化周波数の違いを強調")
-st.markdown(
-    f"上: 全体の波形を●で示し、下: 最初の0.001秒をズームして標本化周波数 {target_sr:,}Hz の点の間隔を確認"
-)
+st.markdown(f"上: 全体を●で示し、下: 最初の0.001秒をズームして {target_sr:,}Hz の標本点を確認")
 
 fig2, (ax3, ax4) = plt.subplots(2, 1, figsize=(8, 6), constrained_layout=True)
-# 全体
+t_full = np.linspace(0, duration, num=len(quantized))
 ax3.plot(t_full, quantized, linewidth=1)
 ax3.scatter(t_full, quantized, s=5)
 ax3.set(title="Processed with Sample Points", xlabel="Time (s)", ylabel="Amplitude")
-# ズーム
+
 zoom_end = 0.001
 zoom_count = int(target_sr * zoom_end)
 t_zoom = t_full[:zoom_count]
@@ -157,13 +148,13 @@ st.markdown("## 再生")
 subtype_map = {8: 'PCM_U8', 16: 'PCM_16', 24: 'PCM_24'}
 selected_subtype = subtype_map.get(bit_depth, 'PCM_16')
 if np.all(quantized == 0):
-    st.warning(f"{target_sr:,}Hz にリサンプリング結果、無音になりました。周波数を上げてください。")
+    st.warning(f"{target_sr:,}Hz にリサンプリング結果、無音になりました。")
 else:
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out:
         sf.write(out.name, quantized, target_sr, subtype=selected_subtype)
         st.audio(out.name, format="audio/wav")
 
-# データ量計算
+# データ量計算セクション
 st.markdown("## データ量計算")
 bytes_size = target_sr * bit_depth * 1 * duration / 8
 kb_size = bytes_size / 1024
