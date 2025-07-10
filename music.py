@@ -187,15 +187,25 @@ count = target_sr * duration  # 標本化点の総数
 bytes_ = count * bit_depth * 2 / 8  # ステレオ2chの場合
 kb = bytes_ / 1024
 mb = kb / 1024
-st.markdown(
-    f"{target_sr:,} Hz × {bit_depth} bit × 2 ch × {duration:.2f} 秒 ÷ 8 = {int(bytes_):,} バイト\n"
-    f"{int(bytes_):,} バイト ÷ 1024 = {kb:,.2f} KB\n"
-    f"{kb:,.2f} KB ÷ 1024 = {mb:,.2f} MB",
-    unsafe_allow_html=True
-)
+# 見やすいようにコードブロックで改行表示
+st.markdown(f"""
+```text
+{target_sr:,} Hz × {bit_depth} bit × 2 ch × {duration:.2f} 秒 ÷ 8 = {int(bytes_):,} バイト
+{int(bytes_):,} バイト ÷ 1024 = {kb:,.2f} KB
+{kb:,.2f} KB ÷ 1024 = {mb:,.2f} MB
+```""", unsafe_allow_html=True)
 
 # チャンネルの違い
 st.markdown("""
 - **ステレオ (2ch)**: 左右2つの音声信号で再生。音の広がりがあります。
 - **モノラル (1ch)**: 1つの音声信号で再生。音の定位は中央になります。
+""", unsafe_allow_html=True)
+
+# 音声ファイル形式の比較テーブル
+st.markdown("""
+| 拡張子 | 圧縮方式     | 特徴                                      |
+|--------|-------------|-------------------------------------------|
+| MP3    | 非可逆圧縮  | ファイルサイズが小さく、多くの機器で再生可能  |
+| FLAC   | 可逆圧縮    | オリジナルと同等の音質を保持、容量は中程度  |
+| WAV    | 非圧縮      | 最大音質だがファイルサイズが非常に大きい    |
 """, unsafe_allow_html=True)
