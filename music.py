@@ -188,18 +188,11 @@ bytes_ = count * bit_depth * 2 / 8  # ステレオ2chの場合
 kb = bytes_ / 1024
 mb = kb / 1024
 # コードブロックで改行を確実に
-st.markdown(
-    "```text
-" +
-    f"{target_sr:,} Hz × {bit_depth} bit × 2 ch × {duration:.2f} 秒 ÷ 8 = {int(bytes_):,} バイト
-" +
-    f"{int(bytes_):,} バイト ÷ 1024 = {kb:,.2f} KB
-" +
-    f"{kb:,.2f} KB ÷ 1024 = {mb:,.2f} MB
-" +
-    "```",
-    unsafe_allow_html=True
-)
+st.markdown(f"""```text
+{target_sr:,} Hz × {bit_depth} bit × 2 ch × {duration:.2f} 秒 ÷ 8 = {int(bytes_):,} バイト
+{int(bytes_):,} バイト ÷ 1024 = {kb:,.2f} KB
+{kb:,.2f} KB ÷ 1024 = {mb:,.2f} MB
+```""", unsafe_allow_html=True)
 
 # チャンネルの違い
 
