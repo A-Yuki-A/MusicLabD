@@ -74,7 +74,7 @@ def load_mp3(uploaded_file):
     audio = AudioSegment.from_file(tmp_path, format="mp3")
     sr = audio.frame_rate  # サンプリング周波数 (Hz)
     samples = np.array(audio.get_array_of_samples(), dtype=np.float32)
-    # ステレオならモノラル化
+    # ステレオなら左右平均でモノラル化
     if audio.channels == 2:
         samples = samples.reshape((-1, 2)).mean(axis=1)
     # 正規化: 振幅を -1.0～1.0 の範囲に
@@ -108,13 +108,13 @@ target_sr = st.slider(
     step=1000
 )
 
-# 量子化ビット数設定
+# 量子化ビット数設定（最小3bit）
 st.markdown(
     "**量子化ビット数 (Bit Depth)**: 振幅 (Amplitude) を何段階で記録するか。ビット数が大きいほど音の強弱を滑らかに。例: CDは16 bit"
 )
 bit_depth = st.slider(
     "量子化ビット数 (bit)",
-    min_value=8, max_value=24,
+    min_value=3, max_value=24,
     value=16, step=1
 )
 
@@ -178,27 +178,24 @@ else:
 st.markdown("## ◼️ データ量計算")
 # データ量を求める式の表示
 st.markdown(
-    "データ量 = 標本化周波数 (Hz) × 量子化ビット数 (bit) × 時間 (s) × チャンネル (ch)"
+    "音のデータ量 = 標本化周波数 (Hz) × 量子化ビット数 (bit) × 時間 (s) × チャンネル数 (ch)"
 )
-# この計算はステレオ (2ch) で行っています
-st.markdown("この計算はステレオ (2ch) で計算しています。")
+st.markdown("設定を変更したファイルのデータ量＝")
 
-# 計算過程の詳細表示
+# 計算過程表示
 count = target_sr * duration  # 標本化点の総数
 bytes_ = count * bit_depth * 2 / 8  # ステレオ2chの場合
 kb = bytes_ / 1024
 mb = kb / 1024
-# 数値をコードブロックで表示し、見た目を区別
-st.markdown(f"""
-```text
-標本化点の総数 = {target_sr} × {duration:.2f} = {int(count):,} 点
-バイト数         = {int(count):,} × {bit_depth} × 2 ÷ 8 = {int(bytes_):,} B
-キロバイト     = {int(bytes_):,} ÷ 1024 = {kb:,.2f} KB
-メガバイト     = {kb:,.2f} ÷ 1024 = {mb:,.2f} MB
-```""", unsafe_allow_html=True)
+st.markdown(
+    f"{target_sr:,} Hz × {bit_depth} bit × 2 ch × {duration:.2f} 秒 ÷ 8 = {int(bytes_):,} バイト\n"
+    f"{int(bytes_):,} バイト ÷ 1024 = {kb:,.2f} KB\n"
+    f"{kb:,.2f} KB ÷ 1024 = {mb:,.2f} MB",
+    unsafe_allow_html=True
+)
 
 # チャンネルの違い
 st.markdown("""
-- **ステレオ (2ch)**: 左右2つの音声信号で再生。音の広がりがある。
-- **モノラル (1ch)**: 1つの音声信号で再生。音の定位は中央。
+- **ステレオ (2ch)**: 左右2つの音声信号で再生。音の広がりがあります。
+- **モノラル (1ch)**: 1つの音声信号で再生。音の定位は中央になります。
 """, unsafe_allow_html=True)
